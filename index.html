@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Evaluación Técnica · Transición y Seguridad Poscuántica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #0a0e1a, #03060c);
+            font-family: 'Inter', 'Segoe UI', system-ui, 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+            overscroll-behavior: none;
+            touch-action: pan-y;
+        }
+
+        .app {
+            width: 100%;
+            min-height: 100vh;
+            background: rgba(248, 250, 252, 0.96);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        /* Pantalla de bienvenida */
+        .welcome-panel {
+            max-width: 880px;
+            width: 90%;
+            background: #ffffff;
+            border-radius: 2rem;
+            padding: 2rem 1.8rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.35);
+            text-align: center;
+        }
+        .welcome-panel h1 {
+            font-size: 1.9rem;
+            background: linear-gradient(135deg, #1e6f9f, #4f46e5);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.8rem;
+        }
+        .welcome-panel p {
+            color: #2c3e66;
+            margin-bottom: 1.8rem;
+            line-height: 1.5;
+        }
+        .btn-start {
+            background: #4f46e5;
+            border: none;
+            color: white;
+            font-weight: 800;
+            font-size: 1.2rem;
+            padding: 0.9rem 2.2rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .btn-start:hover { background: #3730a3; transform: scale(1.02); }
+
+        /* Área del quiz (oculta inicialmente) */
+        .quiz-area {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.2rem;
+            flex-direction: column;
+        }
+        .quiz-header {
+            background: #1f2e3a;
+            border-radius: 1.5rem;
+            padding: 1rem 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            color: white;
+            font-weight: 700;
+        }
+        .badge-counter {
+            background: #ff8c42;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            color: #2c1a0a;
+        }
+        .score-live {
+            background: #2c6e3c;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+        }
+        .progress-wrapper {
+            background: #eef2f5;
+            border-radius: 1.2rem;
+            padding: 0.7rem 1rem;
+            margin-bottom: 1rem;
+        }
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #1a4a6e;
+        }
+        .progress-bar-bg {
+            background: #d0dce4;
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #1e6f9f, #42e695);
+            width: 0%;
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.4s ease;
+        }
+        .question-card {
+            background: white;
+            border-radius: 2rem;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+            border-left: 8px solid #4f46e5;
+        }
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #0b2b3b;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1.2rem;
+            background: #f9fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .option-item:hover:not(.selected-highlight) {
+            background: #eef2ff;
+            border-color: #a5b4fc;
+            transform: translateX(3px);
+        }
+        /* ESTILO DE ALTA VISIBILIDAD (opción seleccionada) */
+        .option-item.selected-highlight {
+            background: #1e6f9f !important;
+            border-color: #0f4a6e !important;
+            box-shadow: 0 4px 14px rgba(30,111,159,0.5);
+        }
+        .option-item.selected-highlight .opt-letter,
+        .option-item.selected-highlight .opt-text {
+            color: white !important;
+            font-weight: 700;
+        }
+        .opt-letter {
+            width: 2rem;
+            height: 2rem;
+            background: rgba(0,0,0,0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        .opt-text {
+            flex: 1;
+            font-size: 0.95rem;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 0.5rem 0;
+        }
+        .btn {
+            border: none;
+            font-weight: 700;
+            padding: 0.7rem 1.4rem;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #cbd5e1;
+            color: #1e293b;
+        }
+        .btn-primary {
+            background: #3a86ff;
+            color: white;
+        }
+        .btn-secondary {
+            background: #e67e22;
+            color: white;
+        }
+        .btn-correction {
+            background: #8b5a2b;
+            color: white;
+        }
+        .btn-reset {
+            background: #1e6f9f;
+            color: white;
+        }
+        .btn:active { transform: scale(0.97); }
+
+        .results-panel {
+            margin-top: 1.5rem;
+            background: #fff2e0;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            border: 2px solid #ffaa33;
+            display: none;
+        }
+        .result-summary {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .result-detail {
+            max-height: 340px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+        }
+        .result-item {
+            padding: 0.6rem;
+            border-bottom: 1px solid #ffd9a0;
+            display: flex;
+            gap: 0.8rem;
+        }
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            margin-top: 1.2rem;
+            color: #7c6b4e;
+        }
+
+        @media (max-width: 700px) {
+            .quiz-area { padding: 0.6rem; }
+            .question-text { font-size: 1rem; }
+            .opt-text { font-size: 0.85rem; }
+            .btn { padding: 0.5rem 1rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app" id="appRoot">
+    <!-- BIENVENIDA -->
+    <div id="welcomePanel" class="welcome-panel">
+        <h1>⚛️ Transición y Seguridad Poscuántica</h1>
+        <p>Evaluación sobre algoritmos NIST, cripto-agilidad, Q-Day, hardware seguro y amenazas cuánticas.<br>
+        🔒 <strong>Modo seguro:</strong> pantalla completa durante la prueba, sin feedback inmediato.<br>
+        ✅ Selecciona una opción → se resalta en <strong style="color:#1e6f9f;">azul intenso</strong>. Al finalizar todas, pulsa “Corrección”.<br>
+        📌 <strong>10 preguntas aleatorias</strong> + opciones mezcladas en cada intento.</p>
+        <button id="startExamBtn" class="btn-start">🚀 COMENZAR EVALUACIÓN</button>
+    </div>
+
+    <!-- CUESTIONARIO (oculto inicialmente) -->
+    <div id="quizPanel" class="quiz-area">
+        <div class="quiz-header">
+            <span class="badge-counter" id="questionCounter">Pregunta 0 / 0</span>
+            <span class="score-live" id="liveScore">📝 Respondidas: 0</span>
+        </div>
+        <div class="progress-wrapper">
+            <div class="progress-stats">
+                <span>Progreso</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        <div id="questionContainer"></div>
+        <div class="nav-buttons">
+            <button id="prevBtn" class="btn btn-secondary" disabled>◀ Anterior</button>
+            <button id="nextBtn" class="btn btn-primary">Siguiente ▶</button>
+            <button id="correctionBtn" class="btn btn-correction">🔐 Corrección</button>
+            <button id="newTestBtn" class="btn btn-reset" style="display: none;">🔄 Nueva Prueba</button>
+        </div>
+        <div id="resultsArea" class="results-panel"></div>
+        <footer>⚡ Pantalla completa activa | Selección resaltada sin validación anticipada</footer>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ==================== 1. BANCO DE PREGUNTAS (20 preguntas - Seguridad Poscuántica) ====================
+        const bankRaw = [
+            { text: "Ante la amenaza 'Harvest Now, Decrypt Later', ¿cuál es el criterio técnico primordial para priorizar la migración de un flujo de datos específico?", options: ["Evaluar la velocidad de procesamiento requerida por las aplicaciones actuales.", "Determinar el horizonte temporal de confidencialidad de la información sensible.", "Identificar la cantidad de dispositivos IoT que consumen dicha información.", "Analizar la compatibilidad de los sistemas con algoritmos de clave simétrica.", "Comparar el consumo de energía entre esquemas clásicos y esquemas híbridos."], correctIdx: 1, justification: "La estrategia de 'cosechar ahora' afecta principalmente a datos que deben permanecer secretos a largo plazo (5, 10 o 20 años), lo que dicta la urgencia de la migración." },
+            { text: "En un entorno de hardware embebido con recursos limitados, ¿qué acción diagnóstica es crítica antes de implementar algoritmos NIST poscuánticos?", options: ["Auditar la capacidad de los módulos HSM para generar claves de 2048 bits.", "Medir el impacto de los nuevos tamaños de clave en la memoria y la CPU.", "Desplegar parches criptográficos exclusivamente en la capa de aplicaciones.", "Reemplazar inmediatamente todas las raíces de confianza físicas del sistema.", "Implementar esquemas de firma digital basados únicamente en curvas elípticas."], correctIdx: 1, justification: "Los candidatos poscuánticos pueden requerir más recursos, necesitando ajustes o aceleradores en hardware limitado." },
+            { text: "¿Cuál es la función técnica principal de la 'Cripto-agilidad' dentro de una infraestructura de clave pública (PKI) moderna?", options: ["Garantizar que todos los certificados se emitan bajo el estándar RSA-2048.", "Permitir la sustitución de algoritmos sin reestructurar todo el stack técnico.", "Aumentar la latencia de las comunicaciones para detectar ataques cuánticos.", "Forzar el uso de algoritmos clásicos hasta que el Q-Day sea una realidad.", "Eliminar la necesidad de gestionar ciclos de vida en las claves criptográficas."], correctIdx: 1, justification: "La cripto-agilidad se define como el diseño de sistemas modulares que soporten múltiples esquemas y versiones de protocolos." },
+            { text: "Al implementar un esquema híbrido en comunicaciones críticas (TLS/VPN), ¿qué objetivo técnico se persigue primordialmente?", options: ["Reducir el tamaño de las tramas de datos para mejorar el ancho de banda.", "Mitigar el riesgo de falla de un nuevo algoritmo mediante el uso de uno clásico.", "Sustituir completamente los algoritmos asimétricos por funciones de hash.", "Evitar la auditoría de los procesos de fabricación de los módulos de hardware.", "Cumplir con los tiempos de descifrado menores a 24 horas en entornos locales."], correctIdx: 1, justification: "El enfoque híbrido combina algoritmos clásicos y poscuánticos para asegurar resistencia si uno de los esquemas falla durante la transición." },
+            { text: "Desde una perspectiva de hardening de firmware, ¿qué requisito debe cumplir un módulo seguro (TEE/TPM) para soportar la era cuántica?", options: ["Limitar el acceso a la red de los dispositivos que utilicen el sistema UEFI.", "Procesar firmas y formatos poscuánticos con nuevos tamaños de clave.", "Mantener una estructura rígida de políticas que impida cualquier actualización.", "Utilizar exclusivamente microcontroladores sin soporte para aceleración física.", "Delegar la protección de la raíz de confianza a servidores en la nube externa."], correctIdx: 1, justification: "Se requiere que los módulos seguros permitan recibir firmas actualizadas y soporten los nuevos formatos criptográficos." },
+            { text: "¿Qué indicador de telemetría sería más útil para diagnosticar un posible ataque de tipo 'Harvest Now, Decrypt Later'?", options: ["Incremento en el uso de CPU durante el proceso de cifrado de archivos locales.", "Patrones anómalos que sugieran una recolección masiva de tráfico cifrado.", "Reducción en la frecuencia de rotación de claves de acceso administrativo.", "Fallos recurrentes en la validación de certificados digitales en el navegador.", "Variación en el consumo eléctrico de los aceleradores criptográficos físicos."], correctIdx: 1, justification: "La detección de exfiltración o recolección masiva es la señal clave de que un atacante está almacenando datos para descifrarlos en el futuro." },
+            { text: "¿Cuál es la implicación técnica directa del algoritmo de Shor para la infraestructura de seguridad actual basada en RSA-2048?", options: ["Incrementa exponencialmente el tiempo necesario para generar claves nuevas.", "Factoriza números enteros grandes en un tiempo significativamente reducido.", "Protege los datos cifrados contra intentos de recolección en redes públicas.", "Convierte los algoritmos de clave simétrica en métodos totalmente obsoletos.", "Facilita la implementación de firmas digitales en dispositivos de bajo consumo."], correctIdx: 1, justification: "Shor puede factorizar números grandes mucho más rápido que los métodos clásicos, amenazando directamente a RSA." },
+            { text: "En la hoja de ruta de la criptografía poscuántica, ¿qué caracteriza al periodo comprendido entre 2024 y 2030?", options: ["La investigación inicial de candidatos resistentes a ataques cuánticos.", "La migración total y reemplazo de toda la criptografía vulnerable.", "La adopción gradual mediante el uso de configuraciones de tipo híbrido.", "El cese definitivo de la publicación de estándares FIPS por parte del NIST.", "La eliminación de los módulos de hardware TPM de los ecosistemas digitales."], correctIdx: 2, justification: "Este periodo se define por una implementación gradual y el uso de enfoques híbridos." },
+            { text: "Al realizar un inventario de activos para la transición cuántica, ¿por qué es necesario clasificar los flujos de datos por sensibilidad?", options: ["Para garantizar que todos los datos se cifren con la misma longitud de clave.", "Para priorizar la migración de información que requiere secreto a largo plazo.", "Para reducir el número de certificados digitales que deben ser re-emitidos.", "Para eliminar el uso de hardware físico en la protección de claves privadas.", "Para cumplir con los requisitos de interoperabilidad de los sistemas legados."], correctIdx: 1, justification: "La clasificación permite enfocar los esfuerzos de migración en los datos más vulnerables al paso del tiempo." },
+            { text: "¿Cuál es el papel fundamental del 'Chip' (TPM/Enclaves seguros) en la estrategia de defensa cuántica?", options: ["Actuar como la base física de confianza para construir ecosistemas resilientes.", "Aumentar la velocidad de conexión a internet en dispositivos finales de IoT.", "Sustituir el uso de playbooks en la respuesta a incidentes criptográficos.", "Permitir el descifrado de datos clásicos en menos de 24 horas por el usuario.", "Reducir la necesidad de realizar auditorías en la cadena de suministro de hardware."], correctIdx: 0, justification: "La verdadera seguridad comienza en el hardware como 'Root of Trust'." },
+            { text: "Un administrador decide implementar 'CRYSTALS-Kyber' en su red. ¿Cuál es el razonamiento técnico detrás de esta elección según los estándares NIST?", options: ["Es el único algoritmo que no requiere actualizaciones de firmware en el hardware.", "Es un mecanismo de establecimiento de claves (KEM) recomendado por el proceso.", "Es un estándar diseñado exclusivamente para romper la criptografía de RSA-2048.", "Es un protocolo de gestión de claves que elimina la necesidad de usar HSM.", "Es una solución temporal que no requiere hibridación con algoritmos clásicos."], correctIdx: 1, justification: "CRYSTALS-Kyber es citado como uno de los estándares FIPS seleccionados por el NIST (específicamente como KEM)." },
+            { text: "¿Qué acción es indispensable en la gestión de claves para soportar los nuevos formatos poscuánticos?", options: ["Prohibir el uso de cualquier algoritmo de firma en dispositivos periféricos.", "Implementar políticas de ciclo de vida que admitan la revocación y re-key.", "Utilizar exclusivamente el almacenamiento en software para todas las claves.", "Evitar el versionado en los protocolos para simplificar la gestión de red.", "Limitar la rotación de claves a un periodo no menor a los diez años de uso."], correctIdx: 1, justification: "La gestión de claves debe soportar nuevos formatos, re-emisión masiva y procesos de re-key." },
+            { text: "Ante la inminencia del 'Q-Day', ¿cuál es el objetivo primordial de la defensa cuántica hoy en día?", options: ["Desarrollar computadoras cuánticas propias para realizar ataques preventivos.", "Reducir la ventana de vulnerabilidad protegiendo la confidencialidad actual.", "Eliminar todos los registros históricos de datos cifrados de los servidores.", "Migrar todas las operaciones de hardware físico a entornos virtuales puros.", "Estandarizar el uso de claves de 2048 bits en todos los niveles de la organización."], correctIdx: 1, justification: "El objetivo es reducir el riesgo hoy para asegurar la integridad y confidencialidad futura." },
+            { text: "¿Cómo afecta la 'Cripto-agilidad' al despliegue de parches en dispositivos IoT?", options: ["Impone la necesidad de reemplazar el hardware físico ante cada actualización.", "Facilita la capacidad de desplegar parches criptográficos en el firmware/UEFI.", "Restringe las actualizaciones de seguridad a una única ventana de tiempo anual.", "Obliga al uso de algoritmos clásicos para evitar el consumo de batería alto.", "Elimina la importancia de auditar el proceso de fabricación de los dispositivos."], correctIdx: 1, justification: "La agilidad prioriza la capacidad de actualizar el stack criptográfico en firmware y dispositivos limitados." },
+            { text: "¿Qué beneficio técnico ofrece la plataforma IBM LinuxONE mencionado en el contexto de la transición cuántica?", options: ["La eliminación total de la necesidad de algoritmos de clave asimétrica.", "El soporte nativo de aceleradores criptográficos para algoritmos poscuánticos.", "La capacidad única de predecir la fecha exacta en que ocurrirá el Q-Day.", "El cifrado de datos sin utilizar claves privadas ni raíces de confianza físicas.", "La reducción del tiempo de descifrado de RSA-2048 a menos de un minuto."], correctIdx: 1, justification: "Se menciona como ejemplo de hardware que ya incorpora soporte para PQC, demostrando viabilidad técnica." },
+            { text: "En una arquitectura de 'Protección Integral Multicapa', ¿cuál es la relación entre el hardware y las aplicaciones?", options: ["Las aplicaciones deben ser la única capa resistente para simplificar el hardware.", "El hardware físico debe ser la base que complementa la seguridad de la nube.", "La capa de red debe sustituir la necesidad de seguridad en el nivel del chip.", "El software de aplicación debe gestionar de forma aislada las raíces de confianza.", "Cada capa debe operar de forma independiente sin necesidad de complementarse."], correctIdx: 1, justification: "Se requiere un enfoque holístico donde cada capa sea resistente y complemente a las demás, con el hardware como base." },
+            { text: "¿Cuál es la consecuencia técnica de no realizar una auditoría en el proceso de fabricación de hardware seguro?", options: ["Se acelera la adopción de algoritmos como CRYSTALS-Dilithium en el firmware.", "Se introducen riesgos agregados en la cadena de suministro durante la transición.", "Se garantiza la compatibilidad total con los estándares de cifrado clásicos.", "Se reduce automáticamente la memoria necesaria para procesar claves PQC.", "Se facilita la re-emisión masiva de certificados en caso de un compromiso global."], correctIdx: 1, justification: "Auditar la fabricación es vital para evitar riesgos en la cadena de suministro durante la migración tecnológica." },
+            { text: "En el contexto de 'Estrategias Técnicas Prioritarias', ¿qué implica el endurecimiento (hardening) del firmware?", options: ["Utilizar contraseñas más largas para el acceso al menú de configuración UEFI.", "Firmar el firmware con algoritmos poscuánticos o esquemas de tipo híbrido.", "Deshabilitar todas las funciones de actualización remota por razones de seguridad.", "Reducir la complejidad de los algoritmos para que funcionen en CPUs antiguas.", "Delegar la integridad del sistema a software de terceros sin soporte de hardware."], correctIdx: 1, justification: "El hardening incluye el uso de firmas PQC o híbridas para asegurar la integridad del firmware." },
+            { text: "¿Cuál es el riesgo de mantener exclusivamente algoritmos asimétricos tradicionales (RSA, ECC) hasta el año 2030?", options: ["Que las computadoras clásicas factoricen las claves en menos de 24 horas.", "Que los datos recolectados hoy sean vulnerables a descifrado futuro en el Q-Day.", "Que los dispositivos IoT dejen de funcionar debido a la falta de hibridación.", "Que la latencia de red disminuya drásticamente afectando la sincronización.", "Que el NIST prohíba el uso de cualquier tipo de criptografía en la nube pública."], correctIdx: 1, justification: "Mantener solo criptografía vulnerable hoy alimenta la amenaza de 'cosechar ahora, descifrar después'." },
+            { text: "¿Qué se requiere para que un sistema sea considerado 'resiliente' ante la era cuántica, según las conclusiones del material?", options: ["El abandono total de la seguridad física en favor de soluciones de software.", "La inversión inmediata en hardware que garantice la confianza y la privacidad.", "La eliminación de los protocolos de telemetría para evitar la fuga de datos.", "El uso de un único algoritmo de cifrado para todas las capas de la organización.", "La espera a que el Q-Day ocurra para iniciar las migraciones de los sistemas."], correctIdx: 1, justification: "La preparación mediante inversión en seguridad de hardware hoy es lo único que garantiza confianza futura." }
+        ];
+
+        const N = 10;  // preguntas por prueba
+        let currentQuestions = [];    // { text, shuffledOptions, correctIndex, justification, userAnswer }
+        let currentIndex = 0;
+        let quizActive = false;
+        let testFinished = false;
+        let fullscreenActive = false;
+
+        // DOM elements
+        const welcomeDiv = document.getElementById('welcomePanel');
+        const quizDiv = document.getElementById('quizPanel');
+        const startBtn = document.getElementById('startExamBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const correctionBtn = document.getElementById('correctionBtn');
+        const newTestBtn = document.getElementById('newTestBtn');
+        const questionContainer = document.getElementById('questionContainer');
+        const questionCounterSpan = document.getElementById('questionCounter');
+        const liveScoreSpan = document.getElementById('liveScore');
+        const progressFill = document.getElementById('progressFill');
+        const progressPercentSpan = document.getElementById('progressPercent');
+        const resultsArea = document.getElementById('resultsArea');
+
+        // Helper: mezclar array
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Generar nuevo test aleatorio
+        function generateRandomTest() {
+            const shuffledBank = shuffleArray([...bankRaw]);
+            const selected = shuffledBank.slice(0, N);
+            return selected.map(raw => {
+                const originalOpts = [...raw.options];
+                const correctText = originalOpts[raw.correctIdx];
+                const shuffledOpts = shuffleArray([...originalOpts]);
+                const newCorrectIdx = shuffledOpts.findIndex(opt => opt === correctText);
+                return {
+                    text: raw.text,
+                    shuffledOptions: shuffledOpts,
+                    correctIndex: newCorrectIdx,
+                    justification: raw.justification,
+                    userAnswer: null
+                };
+            });
+        }
+
+        function updateProgressAndStats() {
+            const answered = currentQuestions.filter(q => q.userAnswer !== null).length;
+            const percent = Math.round((answered / N) * 100);
+            liveScoreSpan.textContent = `📝 Respondidas: ${answered} / ${N}`;
+            progressFill.style.width = `${percent}%`;
+            progressPercentSpan.textContent = `${percent}%`;
+            questionCounterSpan.textContent = `Pregunta ${currentIndex+1} / ${N}`;
+        }
+
+        function renderCurrentQuestion() {
+            if (!currentQuestions.length) return;
+            const q = currentQuestions[currentIndex];
+            const selectedIdx = q.userAnswer;
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+            let optionsHtml = '';
+            q.shuffledOptions.forEach((opt, idx) => {
+                const letter = letters[idx] || String.fromCharCode(65+idx);
+                const isSelected = (selectedIdx === idx);
+                const selectedClass = isSelected ? 'selected-highlight' : '';
+                optionsHtml += `
+                    <div class="option-item ${selectedClass}" data-opt-index="${idx}">
+                        <span class="opt-letter">${letter}</span>
+                        <span class="opt-text">${opt}</span>
+                    </div>
+                `;
+            });
+            const html = `<div class="question-card"><div class="question-text">${q.text}</div><div class="options-grid">${optionsHtml}</div></div>`;
+            questionContainer.innerHTML = html;
+            // event listeners para selección
+            const optDivs = document.querySelectorAll('.option-item');
+            optDivs.forEach(div => {
+                const idx = parseInt(div.getAttribute('data-opt-index'));
+                div.addEventListener('click', () => {
+                    if (!quizActive || testFinished) return;
+                    currentQuestions[currentIndex].userAnswer = idx;
+                    updateProgressAndStats();
+                    renderCurrentQuestion();
+                });
+            });
+            updateProgressAndStats();
+            prevBtn.disabled = (currentIndex === 0);
+        }
+
+        function nextQuestion() { if (currentIndex < N-1) { currentIndex++; renderCurrentQuestion(); } }
+        function prevQuestion() { if (currentIndex > 0) { currentIndex--; renderCurrentQuestion(); } }
+
+        function exitFullscreen() { if (document.fullscreenElement) document.exitFullscreen(); }
+
+        function showCorrection() {
+            if (!quizActive || testFinished) return;
+            const unanswered = currentQuestions.filter(q => q.userAnswer === null).length;
+            if (unanswered > 0) {
+                alert(`❌ Aún faltan ${unanswered} pregunta(s) por responder. Completa todas para solicitar la corrección.`);
+                return;
+            }
+            const pwd = prompt("🔐 Ingrese la contraseña para ver los resultados:");
+            if (pwd === "Tecno2026") {
+                exitFullscreen();
+                let correctCount = 0;
+                let detailsHtml = '';
+                for (let i = 0; i < currentQuestions.length; i++) {
+                    const q = currentQuestions[i];
+                    const isCorrect = (q.userAnswer === q.correctIndex);
+                    if (isCorrect) correctCount++;
+                    const userLetter = String.fromCharCode(65 + q.userAnswer);
+                    const correctLetter = String.fromCharCode(65 + q.correctIndex);
+                    const userText = q.shuffledOptions[q.userAnswer];
+                    const correctText = q.shuffledOptions[q.correctIndex];
+                    detailsHtml += `<div class="result-item"><span>${isCorrect ? '✅' : '❌'}</span><div><strong>Pregunta ${i+1}</strong><br>Tu respuesta: ${userLetter}) ${userText}<br>Correcta: ${correctLetter}) ${correctText}<br><span style="font-size:0.75rem;">📘 ${q.justification}</span></div></div>`;
+                }
+                const percent = Math.round((correctCount/N)*100);
+                resultsArea.innerHTML = `<div class="result-summary">🎯 Aciertos: ${correctCount} de ${N} (${percent}%)</div><div class="result-detail">${detailsHtml}</div><button id="closeResultsBtn" class="btn btn-secondary" style="margin-top:10px;">✖ Cerrar resumen</button>`;
+                resultsArea.style.display = 'block';
+                newTestBtn.style.display = 'inline-flex';
+                testFinished = true;
+                quizActive = false;
+                document.getElementById('closeResultsBtn')?.addEventListener('click', () => resultsArea.style.display = 'none');
+            } else {
+                alert("❌ Solicita la corrección a tu profesor.");
+            }
+        }
+
+        function resetToWelcome() {
+            exitFullscreen();
+            quizActive = false;
+            testFinished = false;
+            welcomeDiv.style.display = 'flex';
+            quizDiv.style.display = 'none';
+            resultsArea.style.display = 'none';
+            newTestBtn.style.display = 'none';
+            currentQuestions = [];
+            currentIndex = 0;
+        }
+
+        async function startEvaluation() {
+            const freshTest = generateRandomTest();
+            currentQuestions = freshTest;
+            currentIndex = 0;
+            testFinished = false;
+            quizActive = true;
+            resultsArea.style.display = 'none';
+            newTestBtn.style.display = 'none';
+            try { await document.documentElement.requestFullscreen(); } catch(e) { console.warn(e); }
+            fullscreenActive = true;
+            welcomeDiv.style.display = 'none';
+            quizDiv.style.display = 'flex';
+            renderCurrentQuestion();
+        }
+
+        // Event listeners
+        startBtn.addEventListener('click', startEvaluation);
+        prevBtn.addEventListener('click', prevQuestion);
+        nextBtn.addEventListener('click', nextQuestion);
+        correctionBtn.addEventListener('click', showCorrection);
+        newTestBtn.addEventListener('click', resetToWelcome);
+
+        // ========== MEDIDAS DE SEGURIDAD ==========
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) ||
+                (e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'p'))) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('cut', e => e.preventDefault());
+        document.addEventListener('paste', e => e.preventDefault());
+        document.addEventListener('dragstart', e => e.preventDefault());
+        window.addEventListener('beforeunload', (e) => {
+            if (quizActive && !testFinished) {
+                e.preventDefault();
+                e.returnValue = 'La evaluación está en curso. Se perderá el progreso.';
+            }
+        });
+        history.pushState(null, null, location.href);
+        window.addEventListener('popstate', () => {
+            if (quizActive && !testFinished) {
+                alert("⚠️ No puedes retroceder durante la evaluación.");
+                history.pushState(null, null, location.href);
+            }
+        });
+        let touchStartY = 0;
+        document.body.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: false });
+        document.body.addEventListener('touchmove', (e) => {
+            if (quizActive && !testFinished && e.touches[0].clientY > touchStartY && window.scrollY === 0) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Estado inicial
+        welcomeDiv.style.display = 'flex';
+        quizDiv.style.display = 'none';
+    })();
+</script>
+</body>
+</html>
